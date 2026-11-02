@@ -22,37 +22,6 @@ DATA/
     ROOM_2/ ... ROOM_9/
 ```
 
-## 2. Put it on GitHub Pages (free)
-
-1. Sign in (or sign up) at <https://github.com>.
-2. Click **+** (top right) → **New repository**. Name it something like `uncatalogued-human`, set it to **Public**, tick **Add a README file**, and click **Create repository**.
-3. Unzip this package on your computer.
-4. In your new repository click **Add file → Upload files** and drag things in **in two or three batches**. GitHub's web uploader takes up to about 100 files at a time and up to 25 MB per file (every file here is well under that). Dragging a *folder* keeps its structure.
-   - batch 1: `index.html`, `CF.ini`, `README.md` and the `js` folder → scroll down and click **Commit changes**
-   - batch 2: the whole `DATA` folder (87 files) → **Commit changes**
-   - if GitHub complains that it is too many files, upload `DATA/TITLE` first, then the rooms a few at a time (`ROOM_1`–`ROOM_3`, `ROOM_4`–`ROOM_6`, `ROOM_7`–`ROOM_9`). When you drag a room folder, GitHub keeps the path, but check afterwards that the rooms ended up inside `DATA/NIGHT_1/` (see section 1).
-   *Prefer a tool?* [GitHub Desktop](https://desktop.github.com) handles any number of files in one go: clone the repo, copy the files in, commit, push.
-5. Go to **Settings → Pages**. Under **Build and deployment**, set **Source: Deploy from a branch**, **Branch: `main`**, folder **`/ (root)`**, and **Save**.
-6. Wait a minute or two. The page shows your link, `https://YOUR-USERNAME.github.io/uncatalogued-human/`. Open it and click through.
-
-Share that link anywhere, or embed it on another site:
-
-```html
-<iframe src="https://YOUR-USERNAME.github.io/uncatalogued-human/" width="800" height="600"
-        allow="fullscreen; autoplay" style="border:0"></iframe>
-```
-
-## 3. Replace the placeholder music
-
-Each room plays the file called **`MUSIC`** inside its own folder, and the menu plays `DATA/TITLE/LOOP`.
-
-1. Export your track as **.mp3** (best for the web; .ogg and .wav also work, MIDI does not).
-2. Name it exactly **`MUSIC.mp3`** (capitals matter on GitHub — `music.mp3` will *not* be found).
-3. On GitHub open the room's folder (`DATA/NIGHT_1/ROOM_3`), click **Add file → Upload files**, drop in the new `MUSIC.mp3` and commit. A file with the same name replaces the old one.
-4. Wait a minute for the site to update. If you still hear the old track, refresh with **Ctrl+F5** (Cmd+Shift+R on Mac).
-
-Tips: a 3–4 minute track at 128–192 kbps is only 3–6 MB. Keep each file under 25 MB for web uploads. If you save as `.ogg` instead, delete the old `MUSIC.mp3` (the site tries mp3 first, then ogg, then wav).
-Browsers only allow one music track at a time, which matches the original engine.
 
 ## 4. Change or add rooms
 
