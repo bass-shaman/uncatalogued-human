@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Uncatalogued Human</title>
+<meta name="description" content="A walkable virtual art gallery. Best with headphones.">
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden;
+    font-family: "Courier New", Courier, monospace; color: #fff;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; }
+  #wrap { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; }
+  /* The game lives in a fixed 640x480 coordinate space that is scaled to fit the window */
+  #stage { position: absolute; left: 50%; top: 50%; width: 640px; height: 480px;
+    transform-origin: 0 0; background: #000; overflow: hidden; }
+  #gl { position: absolute; inset: 0; width: 640px; height: 480px; display: block; }
+  .layer { position: absolute; inset: 0; width: 640px; height: 480px; }
+  .hidden { display: none !important; }
+  img { -webkit-user-drag: none; display: block; }
+
+  /* start / splash */
+  #start { background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; text-align: center; }
+  #start .t { font-size: 22px; letter-spacing: 6px; text-transform: uppercase; }
+  #start .s { margin-top: 18px; font-size: 13px; letter-spacing: 3px; opacity: .75; animation: blink 1.4s steps(2, jump-none) infinite; }
+  #start .h { position: absolute; bottom: 14px; left: 0; right: 0; font-size: 11px; opacity: .5; letter-spacing: 1px; }
+  @keyframes blink { 50% { opacity: .15; } }
+  #splash { background: #000; cursor: pointer; }
+  #splash img { position: absolute; left: 80px; top: 0; width: 480px; height: 480px; }
+
+  /* menu */
+  #menu { background: #000; }
+  #menu .bg { position: absolute; inset: 0; width: 640px; height: 480px; }
+  .btn { position: absolute; cursor: pointer; transition: filter .08s, transform .08s; }
+  .btn:hover { filter: brightness(1.45) saturate(1.2); transform: scale(1.04); }
+  .btn:active { transform: scale(.98); }
+  #nightlabel { width: 320px; height: 96px; left: 160px; top: 157px; background-repeat: no-repeat; background-size: auto 96px; }
+  #arrL { left: 48px; top: 152px; transform: scaleX(-1); }
+  #arrL:hover { transform: scaleX(-1) scale(1.04); }
+  #arrR { left: 496px; top: 152px; }
+  #exitbtn { left: 160px; top: 365px; }
+
+  /* pause */
+  #pause { background: #000; }
+  #pause .bg { position: absolute; inset: 0; width: 640px; height: 480px; }
+  .hot { position: absolute; cursor: pointer; border-radius: 4px; }
+  .hot:hover { background: rgba(255,255,255,.12); box-shadow: 0 0 14px rgba(255,255,255,.25); }
+  #hotResume { left: 225px; top: 188px; width: 190px; height: 40px; }
+  #hotSens { left: 190px; top: 248px; width: 260px; height: 40px; }
+  #hotQuit { left: 165px; top: 307px; width: 310px; height: 40px; }
+  #sensVal { position: absolute; left: 456px; top: 252px; font-size: 18px; letter-spacing: 2px; text-shadow: 0 0 6px #000, 1px 1px 0 #000; cursor: pointer; }
+  #sensVal b { cursor: pointer; padding: 0 5px; }
+  #sensVal b:hover { color: #7ff; }
+  #roomjump { position: absolute; left: 20px; top: 372px; width: 430px; font-size: 11px; letter-spacing: 1px; }
+  #roomjump .lbl { opacity: .7; margin-bottom: 4px; text-shadow: 1px 1px 0 #000; }
+  #roomjump button { font: inherit; font-size: 12px; color: #fff; background: rgba(0,0,0,.55); border: 1px solid rgba(255,255,255,.55);
+    min-width: 28px; height: 24px; margin: 0 3px 3px 0; cursor: pointer; }
+  #roomjump button:hover { background: #fff; color: #000; }
+  #roomjump button.cur { background: rgba(255,255,255,.25); }
+
+  /* HUD */
+  #hud { pointer-events: none; }
+  #credit { position: absolute; right: 0; bottom: 0; }
+  #layerfx { position: absolute; inset: 0; background-repeat: no-repeat; pointer-events: none; }
+  #interact { position: absolute; left: 0; right: 0; bottom: 64px; text-align: center; pointer-events: none; }
+  #interact img { margin: 0 auto; }
+  #interact span { font-size: 14px; letter-spacing: 3px; background: rgba(0,0,0,.55); padding: 5px 12px; text-shadow: 1px 1px 0 #000; animation: blink 1.2s steps(2, jump-none) infinite; }
+  #flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  #loading { background: #000; display: flex; align-items: center; justify-content: center; font-size: 14px; letter-spacing: 6px; }
+  #clickhint { position: absolute; left: 0; right: 0; top: 200px; text-align: center; font-size: 15px; letter-spacing: 3px; text-shadow: 0 0 6px #000, 1px 1px 0 #000; background: rgba(0,0,0,.45); padding: 14px 0; cursor: pointer; }
+
+  /* outside the stage */
+  #foot { position: fixed; left: 0; right: 0; bottom: 4px; text-align: center; font-size: 10px; letter-spacing: 1px; opacity: .6; text-shadow: 0 0 3px #000, 0 0 3px #000; pointer-events: none; z-index: 5; padding: 0 8px; }
+  #foot a { color: inherit; pointer-events: auto; }
+  #foot { display: none; } body[data-s=start] #foot, body[data-s=menu] #foot { display: block; }
+  #mute { position: fixed; right: 8px; top: 8px; z-index: 6; width: 34px; height: 34px; border: 1px solid rgba(255,255,255,.5);
+    background: rgba(0,0,0,.55); color: #fff; font-size: 16px; cursor: pointer; touch-action: manipulation; }
+  #mute:hover { background: #fff; color: #000; }
+  #fs { position: fixed; right: 48px; top: 8px; z-index: 6; width: 34px; height: 34px; border: 1px solid rgba(255,255,255,.5);
+    background: rgba(0,0,0,.55); color: #fff; font-size: 16px; cursor: pointer; touch-action: manipulation; }
+  #fs:hover { background: #fff; color: #000; }
+  #err { position: fixed; inset: 0; z-index: 20; background: #000; display: none; align-items: center; justify-content: center; padding: 24px; text-align: center; line-height: 1.6; font-size: 14px; }
+
+  /* touch controls */
+  #touch { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
+  #touch .pad { position: absolute; width: 110px; height: 110px; border-radius: 50%; border: 2px solid rgba(255,255,255,.35); background: rgba(255,255,255,.08); display: none; }
+  #touch .knob { position: absolute; left: 35px; top: 35px; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.45); }
+  #pausebtn { position: fixed; left: 8px; top: 8px; z-index: 6; width: 34px; height: 34px; border: 1px solid rgba(255,255,255,.5); background: rgba(0,0,0,.55); color: #fff; font-size: 14px; display: none; touch-action: manipulation; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage">
+    <canvas id="gl" width="640" height="480"></canvas>
+
+    <div id="hud" class="layer hidden">
+      <div id="layerfx"></div>
+      <div id="interact" class="hidden"></div>
+      <img id="credit" alt="">
+      <div id="flash"></div>
+    </div>
+
+    <div id="menu" class="layer hidden">
+      <img class="bg" id="menubg" alt="">
+      <div class="btn" id="nightlabel"></div>
+      <img class="btn" id="arrL" alt="previous night">
+      <img class="btn" id="arrR" alt="next night">
+      <img class="btn" id="exitbtn" alt="leave">
+    </div>
+
+    <div id="pause" class="layer hidden">
+      <img class="bg" id="pausebg" alt="">
+      <div class="hot" id="hotResume" title="Resume"></div>
+      <div class="hot" id="hotSens" title="Sensitivity"></div>
+      <div id="sensVal"><b id="sensDn">&lt;</b><span id="sensNum">6</span><b id="sensUp">&gt;</b></div>
+      <div class="hot" id="hotQuit" title="Quit to menu"></div>
+      <div id="roomjump"><div class="lbl">JUMP TO ROOM</div><div id="roomjumpbtns"></div></div>
+    </div>
+
+    <div id="splash" class="layer hidden"><img id="splashimg" alt=""></div>
+    <div id="loading" class="layer hidden">LOADING</div>
+    <div id="start" class="layer">
+      <div class="t" id="starttitle">Uncatalogued Human</div>
+      <div class="s" id="startsub">LOADING...</div>
+      <div class="h">best with headphones &middot; works with keyboard + mouse or touch</div>
+    </div>
+  </div>
+</div>
+
+<div id="touch"><div class="pad" id="padL"><div class="knob" id="knob"></div></div></div>
+<button id="pausebtn" aria-label="Pause">II</button>
+<button id="mute" aria-label="Mute" title="Mute / unmute (M)">&#128266;</button>
+<button id="fs" aria-label="Fullscreen" title="Fullscreen (F4)">&#9974;</button>
+<div id="foot">Made with BAPALON by KIRA LLC &middot; based on SOUP by &#20028; / Don (yarhalla) &middot; web viewer is an unofficial re-creation</div>
+<div id="err"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
